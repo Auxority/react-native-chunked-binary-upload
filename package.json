@@ -9,8 +9,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@rpldy/chunked-sender": "^1.7.0",
-    "@rpldy/native-uploady": "^1.7.0",
     "@types/react": "~18.2.14",
     "expo": "^49.0.0",
     "expo-constants": "~14.4.2",
