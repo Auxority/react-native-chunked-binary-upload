@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import sha256 from "./sha256";
+import { Base64 } from "js-base64";
 
 const Upload = () => {
     const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
@@ -9,21 +10,19 @@ const Upload = () => {
 
     const uploadChunks = useCallback(async (chunks) => {
         const promises = chunks.map((chunk, index) => {
-            // problem for later: order of chunks is not guaranteed, but is needed for reassembly
-            // how do I keep track of this?
-            const formData = new FormData();
-            formData.append("chunk_hash", chunk.hash);
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                formData.append("chunk_hash", chunk.hash);
 
-            // convert the blob to a file (the commented line below could be used if the server accepted blobs)
-            // formData.append("upload", chunk.payload);
-            const file = new File([chunk.payload], `chunk-${index}`, { type: "application/octet-stream" });
-            formData.append("upload", file);
+                const base64 = Base64.fromUint8Array(chunk.payload);
+                formData.append("upload", base64);
 
-            console.log(formData);
+                const promise = fetch(UPLOAD_ENDPOINT, {
+                    method: "POST",
+                    body: formData,
+                });
 
-            return fetch(UPLOAD_ENDPOINT, {
-                method: "POST",
-                body: formData,
+                resolve(promise);
             });
         });
 
@@ -36,35 +35,40 @@ const Upload = () => {
         }
     }, []);
 
-    const getChunkFromBlob = useCallback(async (blob) => {
-        return new Promise((resolve) => {
+    const getChunkFromBlobSlice = useCallback(async (blobSlice) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
 
             reader.onloadend = async () => {
+                if (reader.error) {
+                    reject(reader.error);
+                    return;
+                }
+
                 const arrayBuffer = reader.result;
-                const uint8Array = new Uint8Array(arrayBuffer);
-   
-                const hash = sha256(uint8Array);
-                const payload = new Blob([uint8Array]);
+                const payload = new Uint8Array(arrayBuffer);
+                const hash = sha256(payload);
+                console.log(blobSlice.size, hash)
 
                 resolve({
-                    payload: payload,
-                    hash: hash,
+                    payload,
+                    hash,
                 });
             }
 
-            reader.readAsArrayBuffer(blob);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(blobSlice);
         });
     }, []);
 
     const prepareAndUploadBlob = useCallback(async (blob) => {
-        const chunkSize = 2 * 1024 * 1024;
+        const chunkSize = 2 * 1024 * 1024; // 2MB
         const chunks = [];
 
         let offset = 0;
         while (offset < blob.size) {
-            const payload = blob.slice(offset, offset + chunkSize);
-            const chunk = await getChunkFromBlob(payload);
+            const blobSlice = blob.slice(offset, offset + chunkSize);
+            const chunk = await getChunkFromBlobSlice(blobSlice);
             chunks.push(chunk);
 
             offset += chunkSize;
