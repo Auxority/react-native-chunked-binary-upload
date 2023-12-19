@@ -1875,6 +1875,88 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
+"@rpldy/abort@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/abort/-/abort-1.7.0.tgz#fcd1f1ff63775090f7237d471082bd5709e84a1f"
+  integrity sha512-qXar9JvKZYe3Z69yKXPEJQsQpk1J4udE/sLJt9bwLXFzNIBvtv9jaMJDPLmkwMPIyCf/uTBOMhF+ReLwo7bq7w==
+  dependencies:
+    "@rpldy/raw-uploader" "^1.7.0"
+    "@rpldy/shared" "^1.7.0"
+    "@rpldy/simple-state" "^1.7.0"
+
+"@rpldy/chunked-sender@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/chunked-sender/-/chunked-sender-1.7.0.tgz#7fe6702d5e38fed7d1d18155d467d620344b8fe0"
+  integrity sha512-ECl4eES78xIqpoCap5SI7G5fliYE3kDnaxtoLLDajB6vLMKuhEvRjMae5PFoTkb2WK3Q1napXteHJ85wAQ0GKA==
+  dependencies:
+    "@rpldy/sender" "^1.7.0"
+    "@rpldy/shared" "^1.7.0"
+    "@rpldy/simple-state" "^1.7.0"
+
+"@rpldy/life-events@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/life-events/-/life-events-1.7.0.tgz#2d646a500a04832ae0c1ee480503d10e68a91503"
+  integrity sha512-QW2MmTvGvrRups0ESZUKcOECoZQ8ga+T6GAEjfjb+DILm4O+uv2WUuIqiqFs1pH1LHP6oRcfc9qHPMn6z/Rr9Q==
+  dependencies:
+    "@rpldy/shared" "^1.7.0"
+
+"@rpldy/native-uploady@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/native-uploady/-/native-uploady-1.7.0.tgz#f7b9b50536d24e85d0505007819787028d93e239"
+  integrity sha512-7wm1YqQE0mN57cRrtbIDZ8G1REizk3xfiidzgZmcZZEWXP+5zvc1F539BTKvung+xa9t3dyMrVpVtpZrXWBttw==
+  dependencies:
+    "@rpldy/shared-ui" "^1.7.0"
+
+"@rpldy/raw-uploader@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/raw-uploader/-/raw-uploader-1.7.0.tgz#316474041ddc10618e857a1286447105da3dd66e"
+  integrity sha512-2FzkovSeEHuujm00g5bUU3DEs8LH+FmiymusNo66+m5QkrswZD01ec4dKSbBuK2BUJgiAQkW/LKSDkt57MiY7A==
+  dependencies:
+    "@rpldy/life-events" "^1.7.0"
+    "@rpldy/shared" "^1.7.0"
+
+"@rpldy/sender@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/sender/-/sender-1.7.0.tgz#0bbb476b85f35a85c149d116566e855a3f73d825"
+  integrity sha512-fgK/h+WLM2n7K2y5/s+a7r2xEUUOkL/BC+fdK1N49iHPIJMuP6DLGPc7ysFd8aXDHhmwHvkZ6dStClnZZSfl+w==
+  dependencies:
+    "@rpldy/shared" "^1.7.0"
+
+"@rpldy/shared-ui@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/shared-ui/-/shared-ui-1.7.0.tgz#5f2989ce4c601e89110ce2597570333037c47051"
+  integrity sha512-829KpTeusTSKSY9nCQP+jfCmTRBLEeXuwSCp31gmTuFmYArb/qQ/+TM8UqCbxOVzllFnPFHLff8Ei/xyY9sK+A==
+  dependencies:
+    "@rpldy/shared" "1.7.0"
+    "@rpldy/uploader" "1.7.0"
+
+"@rpldy/shared@1.7.0", "@rpldy/shared@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/shared/-/shared-1.7.0.tgz#92b85a93020fa3b1677379d36ac61a5500b985a9"
+  integrity sha512-oZBEmuelnvu1W2B5pqgHZxItAmeZadaRkdjf6A3enNnoLWLoo/XQYhrm3wk16hnExwfAplPfNx+gzd2GJFFsuw==
+  dependencies:
+    invariant "^2.2.4"
+    just-throttle "^4.2.0"
+
+"@rpldy/simple-state@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/simple-state/-/simple-state-1.7.0.tgz#50085590502a036236d178de9ee057ddfc75cdaf"
+  integrity sha512-A3Wt3rfQFqiFBDGuSkqtja3GGd1AhnLlazwLGEf8SIGLLoDLweCYl1tSbeT+Oib5qmdZ1ahAe7iz8k7r5ztakA==
+  dependencies:
+    "@rpldy/shared" "^1.7.0"
+
+"@rpldy/uploader@1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@rpldy/uploader/-/uploader-1.7.0.tgz#882f0163938735e01ea387930f4a167a59e3b371"
+  integrity sha512-+m0Gojk/E1VyhC00xcmsPzWV0ml/aSxiE0g2icwnQ13N9S8YOpgatFbpQEplflTn5Htf0O/Jh4stlHIfg3LaPQ==
+  dependencies:
+    "@rpldy/abort" "^1.7.0"
+    "@rpldy/life-events" "^1.7.0"
+    "@rpldy/raw-uploader" "^1.7.0"
+    "@rpldy/sender" "^1.7.0"
+    "@rpldy/shared" "^1.7.0"
+    "@rpldy/simple-state" "^1.7.0"
+
 "@segment/loosely-validate-event@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@segment/loosely-validate-event/-/loosely-validate-event-2.0.0.tgz#87dfc979e5b4e7b82c5f1d8b722dfd5d77644681"
@@ -1944,6 +2026,25 @@
   integrity sha512-nNPsNE65wjMxEKI93yOP+NPGGBJz/PoN3kZsVLee0XMiJolxSekEVD8wRwBUBqkwc7UWop0edW50yrCQW4CyRw==
   dependencies:
     undici-types "~5.26.4"
+
+"@types/prop-types@*":
+  version "15.7.11"
+  resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.11.tgz#2596fb352ee96a1379c657734d4b913a613ad563"
+  integrity sha512-ga8y9v9uyeiLdpKddhxYQkxNDrfvuPrlFb0N1qnZZByvcElJaXthF1UhvCh9TLWJBEHeNtdnbysW7Y6Uq8CVng==
+
+"@types/react@~18.2.14":
+  version "18.2.45"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.2.45.tgz#253f4fac288e7e751ab3dc542000fb687422c15c"
+  integrity sha512-TtAxCNrlrBp8GoeEp1npd5g+d/OejJHFxS3OWmrPBMFaVQMSN0OFySozJio5BHxTuTeug00AVXVAjfDSfk+lUg==
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/scheduler" "*"
+    csstype "^3.0.2"
+
+"@types/scheduler@*":
+  version "0.16.8"
+  resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.8.tgz#ce5ace04cfeabe7ef87c0091e50752e36707deff"
+  integrity sha512-WZLiwShhwLRmeV6zH+GkbOFT6Z6VklCItrDioxUnv+u4Ll+8vKeFySoFyK/0ctcRpOmwAicELfmys1sDc/Rw+A==
 
 "@types/stack-utils@^2.0.0":
   version "2.0.3"
@@ -2796,6 +2897,11 @@ crypto-random-string@^2.0.0:
   resolved "https://registry.yarnpkg.com/crypto-random-string/-/crypto-random-string-2.0.0.tgz#ef2a7a966ec11083388369baa02ebead229b30d5"
   integrity sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==
 
+csstype@^3.0.2:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.3.tgz#d80ff294d114fb0e6ac500fbf85b60137d7eff81"
+  integrity sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==
+
 dag-map@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/dag-map/-/dag-map-1.0.2.tgz#e8379f041000ed561fc515475c1ed2c85eece8d7"
@@ -3099,6 +3205,11 @@ expo-constants@~14.4.2:
     "@expo/config" "~8.1.0"
     uuid "^3.3.2"
 
+expo-document-picker@~11.5.4:
+  version "11.5.4"
+  resolved "https://registry.yarnpkg.com/expo-document-picker/-/expo-document-picker-11.5.4.tgz#11c274d1a2f4aa1f0ca7c0403ca02017a20d832e"
+  integrity sha512-4lpRixi33kjoQQy9lfrGs48yFRMOgBgdnqjYWVFe85WFy/WkEoFC2E8usxcFdrIigtfy9Z+HY3/je4lHEYqyLg==
+
 expo-file-system@~15.4.0, expo-file-system@~15.4.5:
   version "15.4.5"
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-15.4.5.tgz#3ef68583027ff0e2fb9eca7a22b3caff6cfc550d"
@@ -3138,12 +3249,19 @@ expo-modules-core@1.5.12:
     compare-versions "^3.4.0"
     invariant "^2.2.4"
 
+expo-splash-screen@~0.20.5:
+  version "0.20.5"
+  resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-0.20.5.tgz#ebeba3e3977606830f74f506ab2cc25042bb7efd"
+  integrity sha512-nTALYdjHpeEA30rdOWSguxn72ctv8WM8ptuUgpfRgsWyn4i6rwYds/rBXisX69XO5fg+XjHAQqijGx/b28+3tg==
+  dependencies:
+    "@expo/prebuild-config" "6.2.6"
+
 expo-status-bar@~1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/expo-status-bar/-/expo-status-bar-1.6.0.tgz#e79ffdb9a84d2e0ec9a0dc7392d9ab364fefa9cf"
   integrity sha512-e//Oi2WPdomMlMDD3skE4+1ZarKCJ/suvcB4Jo/nO427niKug5oppcPNYO+csR6y3ZglGuypS+3pp/hJ+Xp6fQ==
 
-expo@~49.0.15:
+expo@^49.0.0:
   version "49.0.21"
   resolved "https://registry.yarnpkg.com/expo/-/expo-49.0.21.tgz#32a66b32d0a233879ec3afdec35fb63d2cc8a4c3"
   integrity sha512-JpHL6V0yt8/fzsmkAdPdtsah+lU6Si4ac7MDklLYvzEil7HAFEsN/pf06wQ21ax4C+BL27hI6JJoD34tzXUCJA==
@@ -4063,6 +4181,11 @@ jsonfile@^6.0.1:
     universalify "^2.0.0"
   optionalDependencies:
     graceful-fs "^4.1.6"
+
+just-throttle@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/just-throttle/-/just-throttle-4.2.0.tgz#5a22da10a4bdb906d2583400eff2fe3fbd9f9662"
+  integrity sha512-/iAZv1953JcExpvsywaPKjSzfTiCLqeguUTE6+VmK15mOcwxBx7/FHrVvS4WEErMR03TRazH8kcBSHqMagYIYg==
 
 kind-of@^6.0.2:
   version "6.0.3"
@@ -5266,6 +5389,13 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
+react-native-document-picker@^9.1.0:
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-document-picker/-/react-native-document-picker-9.1.0.tgz#d9d6ff271c01f5b850e482210dd809c3d55b23a7"
+  integrity sha512-SRKPIAzUtcPDUstLRhQeebVVM+x+1I24iSvoy5mFp1KAD+6+UyDEle0SoD96k7MxVH5o46wPifWCYOA3FuQOyw==
+  dependencies:
+    invariant "^2.2.4"
+
 react-native@0.72.6:
   version "0.72.6"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.72.6.tgz#9f8d090694907e2f83af22e115cc0e4a3d5fa626"
@@ -6139,6 +6269,11 @@ type-is@~1.6.18:
   dependencies:
     media-typer "0.3.0"
     mime-types "~2.1.24"
+
+typescript@^5.1.3:
+  version "5.3.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.3.3.tgz#b3ce6ba258e72e6305ba66f5c9b452aaee3ffe37"
+  integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
 
 ua-parser-js@^1.0.35:
   version "1.0.37"
