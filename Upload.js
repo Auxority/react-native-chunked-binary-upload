@@ -2,7 +2,6 @@ import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import sha256 from "./sha256";
-import * as Crypto from "expo-crypto";
 
 const Upload = () => {
     const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
