@@ -1,38 +1,45 @@
 import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import sha256 from "./sha256";
+// import sha256 from "./sha256";
+import * as FileSystem from "expo-file-system";
 import { Base64 } from "js-base64";
+import { sha256 } from "react-native-expo-sha256";
 
 const Upload = () => {
-    const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
-    // const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test"
+    // const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
+    const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test"
 
     const uploadChunks = useCallback(async (chunks) => {
         const promises = chunks.map((chunk, index) => {
             return new Promise((resolve) => {
-                const formData = new FormData();
-                formData.append("chunk_hash", chunk.hash);
-
-                const base64 = Base64.fromUint8Array(chunk.payload);
-                formData.append("upload", base64);
-
-                const promise = fetch(UPLOAD_ENDPOINT, {
-                    method: "POST",
-                    body: formData,
+                const uploadTask = FileSystem.createUploadTask(UPLOAD_ENDPOINT, chunk.uri, {
+                    httpMethod: "POST",
+                    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+                    headers: {
+                        "Content-Type": "application/octet-stream",
+                        "X-File-Name": `chunk-${index}`,
+                        "X-File-Hash": chunk.hash,
+                        "X-File-Index": String(index),
+                        "X-File-Total": String(chunks.length),
+                    },
                 });
 
-                resolve(promise);
+                const res = uploadTask.uploadAsync();
+                resolve(res);
             });
         });
 
         try {
             const responses = await Promise.all(promises);
-            const data = await Promise.all(responses.map((response) => response.json()));
-            console.log(data);
+            // const data = await Promise.all(responses.map((response) => response.json()));
+            // console.log(data);
         } catch (err) {
             console.error(`Chunk upload error: ${err}`);
         }
+
+        // cleanup chunks that are saved to disk
+        await Promise.all(chunks.map((chunk) => FileSystem.deleteAsync(chunk.uri)));
     }, []);
 
     const getChunkFromBlobSlice = useCallback(async (blobSlice) => {
@@ -45,18 +52,26 @@ const Upload = () => {
                     return;
                 }
 
-                const arrayBuffer = reader.result;
-                const payload = new Uint8Array(arrayBuffer);
-                const hash = sha256(payload);
-                console.log(blobSlice.size, hash)
+                const payload = new Uint8Array(reader.result);
+                // const hash = sha256(payload);
+
+                const base64Payload = Base64.fromUint8Array(payload);
+                const uri = `${FileSystem.documentDirectory}-${hash}.chunk`;
+                await FileSystem.writeAsStringAsync(
+                    uri,
+                    base64Payload, {
+                    encoding: FileSystem.EncodingType.Base64
+                });
+
+                const hash = sha256(uri);
+                console.log(`${hash} -> ${uri}`);
 
                 resolve({
-                    payload,
-                    hash,
+                    uri: uri,
+                    hash: hash,
                 });
             }
 
-            reader.onerror = reject;
             reader.readAsArrayBuffer(blobSlice);
         });
     }, []);

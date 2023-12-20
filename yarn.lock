@@ -5325,6 +5325,11 @@ react-native-document-picker@^9.1.0:
   dependencies:
     invariant "^2.2.4"
 
+react-native-expo-sha256@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-expo-sha256/-/react-native-expo-sha256-1.0.0.tgz#f778342a3cea6bfa12afaabfb9c915f4cc1fc7c0"
+  integrity sha512-+AhwtpzAMGrdXBo+1ANFpXF89Jv20KIAOsQGBzd7IrJpSz88GQs6L6wJ0aQq7WWU6+lhFkyTEXd0TdWqojwlig==
+
 react-native@0.72.6:
   version "0.72.6"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.72.6.tgz#9f8d090694907e2f83af22e115cc0e4a3d5fa626"
