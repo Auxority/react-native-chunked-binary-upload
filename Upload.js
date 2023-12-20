@@ -1,39 +1,56 @@
 import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system";
 import CryptoJS from "crypto-js";
+
+import { Buffer } from "buffer";
 
 const Upload = () => {
     // const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
     const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test";
     const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
 
+    const uint8ArrayToBase64 = (uint8Array) => {
+        const buffer = Buffer.from(uint8Array);
+        return buffer.toString("base64");
+    };
+
     // THIS SHOULD STAY IN THE UPLOAD.JS FILE:
     const uploadChunk = async (chunk, fileId, index) => {
-        const formData = new FormData();
+        const base64String = uint8ArrayToBase64(chunk.payload);
+        const fileUri = `${FileSystem.cacheDirectory}/${fileId}-chunk-${index}.txt`;
 
-        const blob = new Blob([chunk.payload], { type: 'application/octet-stream' });
-        console.log(`Blob: ${blob.size} bytes. Payload: ${chunk.payload.length} bytes`);
-        formData.append("upload", blob);
+        console.log(`Writing chunk ${index}`);
 
-        const headers = {
-            "X-Chunk-Index": index,
-            "X-Chunk-Hash": chunk.hash,
-            "X-File-Id": fileId,
-        };
+        await FileSystem.writeAsStringAsync(
+            fileUri,
+            base64String,
+            { encoding: FileSystem.EncodingType.Base64 }
+        );
 
-        console.log(`Starting chunk upload!`);
+        console.log(`Uploading chunk ${index}`);
 
         try {
-            const res = await fetch(UPLOAD_ENDPOINT, {
-                method: "POST",
-                body: formData,
-                headers: headers,
-            });
-            console.log(res.status, res.statusText);
+            const res = await FileSystem.uploadAsync(
+                UPLOAD_ENDPOINT,
+                fileUri,
+                {
+                    httpMethod: "POST",
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        "X-Chunk-Index": String(index),
+                        "X-Chunk-Hash": chunk.hash,
+                        "X-File-Id": fileId,
+                    },
+                }
+            );
+            console.log(res.status);
         } catch (err) {
             console.error(`Error while uploading chunk: ${err}`);
         }
+
+        await FileSystem.deleteAsync(fileUri);
     }
 
     const uploadChunks = useCallback(async (chunks, fileId) => {
@@ -60,15 +77,10 @@ const Upload = () => {
     const readBlobSliceAsArrayBuffer = useCallback((blobSlice) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => resolve(createChunk(reader.result));
+            reader.onload = () => resolve(createChunk(reader.result));
             reader.onerror = (err) => reject(`Error reading blob slice: ${err}`);
             reader.readAsArrayBuffer(blobSlice);
         });
-    }, []);
-
-    const processBlobSlice  = useCallback((blob, offset) => {
-        const blobSlice = blob.slice(offset, offset + CHUNK_SIZE);
-        return readBlobSliceAsArrayBuffer(blobSlice);
     }, []);
 
     const createChunks = useCallback(async (blob) => {
@@ -76,10 +88,11 @@ const Upload = () => {
 
         for (let offset = 0; offset < blob.size; offset += CHUNK_SIZE) {
             try {
-                const chunk = await processBlobSlice(blob, offset);
+                const blobSlice = blob.slice(offset, offset + CHUNK_SIZE);
+                const chunk = await readBlobSliceAsArrayBuffer(blobSlice);
                 chunks.push(chunk);
             } catch (err) {
-                console.error(`Error while uploading chunks: ${err}`);
+                console.error(`Error while creating chunks: ${err}`);
                 break;
             }
         }
