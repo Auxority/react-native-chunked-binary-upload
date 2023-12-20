@@ -16,10 +16,10 @@ export default class ChunkUtils {
                 const blobSlice = blob.slice(offset, offset + ChunkUtils.CHUNK_SIZE);
                 const chunk = await ChunkUtils.readBlobSliceAsArrayBuffer(blobSlice);
                 chunks.push(chunk);
-                console.log(`Progress: Created chunk ${offset / ChunkUtils.CHUNK_SIZE + 1} of ${Math.ceil(blob.size / ChunkUtils.CHUNK_SIZE)}`);
+                // TODO: Show progress to user?
+                console.log(`Hashing progress: ${Math.floor(100 * (offset / blob.size))}% (${offset} / ${blob.size})`);
             } catch (err) {
-                console.error(`Error while creating chunks: ${err}`);
-                break;
+                throw new Error(`Error while creating chunks: ${err}`);
             }
         }
     
@@ -34,8 +34,6 @@ export default class ChunkUtils {
             payload,
             hash,
         };
-
-        console.log(`${hash} <- ${payload.length} bytes`);
 
         return chunk;
     }

@@ -11,39 +11,39 @@ class UploadUtils {
     private static readonly UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
 
     public static async startFileUpload() {
-        const result = await UploadUtils.pickDocument();
-        if (result === undefined) {
-            return;
-        }
-
-        await UploadUtils.uploadDocument(result.assets[0]);
+        const document = await UploadUtils.pickDocument();
+        await UploadUtils.uploadDocument(document);
     }
 
-    public static async uploadDocument(asset: DocumentPicker.DocumentPickerAsset) {
+    private static async uploadDocument(asset: DocumentPicker.DocumentPickerAsset) {
         try {
-            const file = await fetch(asset.uri);
-            const blob = await file.blob();
+            const blob = await UploadUtils.getBlobFromAsset(asset);
             const chunks = await ChunkUtils.createChunks(blob);
             const hashes = chunks.map((chunk) => chunk.hash);
             const fileId = CryptoJS.SHA256(hashes.join("")).toString();
             await UploadUtils.uploadChunks(chunks, fileId);
         } catch (err) {
-            console.error(`Upload error: ${err}`);
+            throw new Error(`Upload error: ${err}`);
         }
     }
 
-    public static async pickDocument() {
+    private static async pickDocument(): Promise<DocumentPicker.DocumentPickerAsset> {
         const result = await DocumentPicker.getDocumentAsync({
             type: "*/*",
             copyToCacheDirectory: true,
             multiple: false,
         });
 
-        if (result.canceled === true || result.assets.length === 0) {
-            return;
+        if (result === undefined || result.canceled === true || result.assets.length === 0) {
+            throw new Error("No file selected");
         }
 
-        return result;
+        return result.assets[0];
+    }
+
+    private static async getBlobFromAsset(asset: DocumentPicker.DocumentPickerAsset) {
+        const file = await fetch(asset.uri);
+        return await file.blob();
     }
 
     private static arrayToBase64(array: Uint8Array) {
@@ -82,24 +82,37 @@ class UploadUtils {
             const response = await UploadUtils.executeUpload(url, fileUri);
             console.log(`Response body: ${response.body}`);
         } catch (err) {
-            console.error(`Error while uploading a chunk: ${err}`);
+            throw new Error(`Error while uploading a chunk: ${err}`);
         }
 
         await FileSystem.deleteAsync(fileUri);
     }
 
     private static async uploadChunks(chunks: Chunk[], fileId: string) {
-        const promises = chunks.map((chunk, index) => UploadUtils.uploadChunk(chunk, fileId, index));
+        let chunksUploaded = 0;
+        const promises = chunks.map(async (chunk, index) => {
+            await UploadUtils.uploadChunk(chunk, fileId, index);
+            chunksUploaded++;
+            // TODO: Show progress to the user?
+            console.log(`Upload progress: ${(chunksUploaded / chunks.length * 100).toFixed(1)}% (${chunksUploaded}/${chunks.length})`);
+        });
         try {
             return await Promise.all(promises);
         } catch (err) {
-            console.error(`Error while uploading chunks: ${err}`);
+            throw new Error(`Error while uploading chunks: ${err}`);
         }
     }
 }
 
 const Upload = () => {
-    const startFileUpload = useCallback(async () => await UploadUtils.startFileUpload(), []);
+    const startFileUpload = useCallback(async () => {
+        try {
+            await UploadUtils.startFileUpload()
+        } catch (err) {
+            // TODO: Show an error message to the user?
+            console.error(`An error occurred while uploading a file: ${err}`);
+        }
+    }, []);
 
     return (
         <View>
