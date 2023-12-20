@@ -7,9 +7,9 @@ import CryptoJS from "crypto-js";
 import { Buffer } from "buffer";
 
 const Upload = () => {
-    // const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
-    const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test";
-    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
+    const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
+    // const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test";
+    const CHUNK_SIZE = 2 * 1024 * 1024; // in MB
 
     const uint8ArrayToBase64 = (uint8Array) => {
         const buffer = Buffer.from(uint8Array);
@@ -18,34 +18,33 @@ const Upload = () => {
 
     // THIS SHOULD STAY IN THE UPLOAD.JS FILE:
     const uploadChunk = async (chunk, fileId, index) => {
-        const base64String = uint8ArrayToBase64(chunk.payload);
         const fileUri = `${FileSystem.cacheDirectory}/${fileId}-chunk-${index}.txt`;
 
         console.log(`Writing chunk ${index}`);
+        console.log(fileId);
 
         await FileSystem.writeAsStringAsync(
             fileUri,
-            base64String,
+            uint8ArrayToBase64(chunk.payload),
             { encoding: FileSystem.EncodingType.Base64 }
         );
 
         console.log(`Uploading chunk ${index}`);
 
         try {
-            const res = await FileSystem.uploadAsync(
-                UPLOAD_ENDPOINT,
+            const urlParameters = new URLSearchParams({
+                chunk_hash: chunk.hash,
+                chunk_index: String(index),
+                file_id: fileId,
+            });
+            const response = await FileSystem.uploadAsync(
+                `${UPLOAD_ENDPOINT}?${urlParameters.toString()}`,
                 fileUri,
                 {
-                    httpMethod: "POST",
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        "X-Chunk-Index": String(index),
-                        "X-Chunk-Hash": chunk.hash,
-                        "X-File-Id": fileId,
-                    },
-                }
+                    httpMethod: "POST"
+                },
             );
-            console.log(res.status);
+            console.log(response);
         } catch (err) {
             console.error(`Error while uploading chunk: ${err}`);
         }
