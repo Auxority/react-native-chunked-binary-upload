@@ -18,10 +18,7 @@ const Upload = () => {
 
     // THIS SHOULD STAY IN THE UPLOAD.JS FILE:
     const uploadChunk = async (chunk, fileId, index) => {
-        const fileUri = `${FileSystem.cacheDirectory}/${fileId}-chunk-${index}.txt`;
-
-        console.log(`Writing chunk ${index}`);
-        console.log(fileId);
+        const fileUri = `${FileSystem.cacheDirectory}/${fileId}-chunk-${index}`;
 
         await FileSystem.writeAsStringAsync(
             fileUri,
@@ -29,22 +26,26 @@ const Upload = () => {
             { encoding: FileSystem.EncodingType.Base64 }
         );
 
-        console.log(`Uploading chunk ${index}`);
-
         try {
             const urlParameters = new URLSearchParams({
+                // test: "true",
                 chunk_hash: chunk.hash,
                 chunk_index: String(index),
                 file_id: fileId,
             });
+            const url = `${UPLOAD_ENDPOINT}?${urlParameters.toString()}`;
+
             const response = await FileSystem.uploadAsync(
-                `${UPLOAD_ENDPOINT}?${urlParameters.toString()}`,
+                url,
                 fileUri,
                 {
-                    httpMethod: "POST"
+                    httpMethod: "POST",
+                    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+                    fieldName: "upload",
                 },
             );
-            console.log(response);
+
+            console.log(`Response body: ${response.body}`);
         } catch (err) {
             console.error(`Error while uploading chunk: ${err}`);
         }
