@@ -1,97 +1,101 @@
 import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { sha256 } from "js-sha256";
+import CryptoJS from "crypto-js";
 
 const Upload = () => {
     // const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
     const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test";
     const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
 
-    const createLimiter = (concurrency) => {
-        let active = 0;
-        const queue = [];
+    // THIS SHOULD STAY IN THE UPLOAD.JS FILE:
+    const uploadChunk = async (chunk, fileId, index) => {
+        const formData = new FormData();
 
-        return (task) => {
-            return new Promise((resolve, reject) => {
-                const runTask = () => {
-                    active++;
-                    task().then(resolve, reject).finally(() => {
-                        active--;
-                        if (queue.length > 0) {
-                            queue.shift()();
-                        }
-                    });
-                };
+        const blob = new Blob([chunk.payload], { type: 'application/octet-stream' });
+        console.log(`Blob: ${blob.size} bytes. Payload: ${chunk.payload.length} bytes`);
+        formData.append("upload", blob);
 
-                if (active < concurrency) {
-                    runTask();
-                } else {
-                    queue.push(runTask);
-                }
-            });
+        const headers = {
+            "X-Chunk-Index": index,
+            "X-Chunk-Hash": chunk.hash,
+            "X-File-Id": fileId,
         };
+
+        console.log(`Starting chunk upload!`);
+
+        try {
+            const res = await fetch(UPLOAD_ENDPOINT, {
+                method: "POST",
+                body: formData,
+                headers: headers,
+            });
+            console.log(res.status, res.statusText);
+        } catch (err) {
+            console.error(`Error while uploading chunk: ${err}`);
+        }
     }
 
-    const createChunk = useCallback(async (reader) => {
-        const payload = new Uint8Array(reader.result);
-        const hash = sha256(payload);
-        console.log(`${hash} <- ${payload.length} bytes`);
+    const uploadChunks = useCallback(async (chunks, fileId) => {
+        const promises = chunks.map((chunk, index) => uploadChunk(chunk, fileId, index));
+        return await Promise.all(promises);
+    }, []);
+    // THIS SHOULD STAY IN THE UPLOAD.JS FILE ^^^
 
-        return {
+    // MOVE THIS TO A CHUNK UTILS FILE:
+    const createChunk = useCallback(async (readerResult) => {
+        const payload = new Uint8Array(readerResult);
+        const wordArray = CryptoJS.lib.WordArray.create(payload);
+        const hash = CryptoJS.SHA256(wordArray).toString();
+        const chunk = {
             payload,
             hash,
         };
+
+        console.log(`${hash} <- ${payload.length} bytes`);
+
+        return chunk;
     }, []);
 
-    const uploadChunk = async (chunk) => {
-        const formData = new FormData();
-        formData.append("upload", chunk.payload);
-        formData.append("chunk_hash", chunk.hash);
-
-        return fetch(UPLOAD_ENDPOINT, {
-            method: "POST",
-            body: formData,
-        });
-    }
-
-    const doSomething123 = useCallback((blobSlice) => {
+    const readBlobSliceAsArrayBuffer = useCallback((blobSlice) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                const chunk = createChunk(reader);
-                resolve(uploadChunk(chunk));
-            };
-            reader.onerror = () => reject(reader.error);
+            reader.onloadend = () => resolve(createChunk(reader.result));
+            reader.onerror = (err) => reject(`Error reading blob slice: ${err}`);
             reader.readAsArrayBuffer(blobSlice);
         });
     }, []);
 
-    const doSomething = useCallback((blob, offset) => {
+    const processBlobSlice  = useCallback((blob, offset) => {
         const blobSlice = blob.slice(offset, offset + CHUNK_SIZE);
-        return doSomething123(blobSlice);
+        return readBlobSliceAsArrayBuffer(blobSlice);
     }, []);
 
-    const uploadChunks = useCallback(async (blob) => {
-        const limit = createLimiter(5);
-        const tasks = [];
+    const createChunks = useCallback(async (blob) => {
+        const chunks = [];
 
         for (let offset = 0; offset < blob.size; offset += CHUNK_SIZE) {
-            tasks.push(limit(() => doSomething(blob, offset)));
+            try {
+                const chunk = await processBlobSlice(blob, offset);
+                chunks.push(chunk);
+            } catch (err) {
+                console.error(`Error while uploading chunks: ${err}`);
+                break;
+            }
         }
 
-        try {
-            await Promise.all(tasks);
-        } catch (err) {
-            console.error(`Upload error: ${err}`);
-        }
+        return chunks;
     }, []);
+    // MOVE THIS TO A CHUNK UTILS FILE ^^^
 
     const uploadAsset = useCallback(async (asset) => {
         try {
             const file = await fetch(asset.uri);
             const blob = await file.blob();
-            await uploadChunks(blob);
+            const chunks = await createChunks(blob);
+            const hashes = chunks.map((chunk) => chunk.hash);
+            const fileId = CryptoJS.SHA256(hashes.join("")).toString();
+            await uploadChunks(chunks, fileId);
         } catch (err) {
             console.error(`Upload error: ${err}`);
         }

@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/react": "~18.2.14",
     "buffer": "^6.0.3",
+    "crypto-js": "^4.2.0",
     "expo": "^49.0.0",
     "expo-constants": "~14.4.2",
     "expo-document-picker": "~11.5.4",
