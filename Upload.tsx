@@ -10,6 +10,15 @@ import ChunkUtils, { Chunk } from "./ChunkUtils";
 class UploadUtils {
     private static readonly UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
 
+    public static async startFileUpload() {
+        const result = await UploadUtils.pickDocument();
+        if (result === undefined) {
+            return;
+        }
+
+        await UploadUtils.uploadDocument(result.assets[0]);
+    }
+
     public static async uploadDocument(asset: DocumentPicker.DocumentPickerAsset) {
         try {
             const file = await fetch(asset.uri);
@@ -90,19 +99,7 @@ class UploadUtils {
 }
 
 const Upload = () => {
-    const startFileUpload = useCallback(async () => {
-        try {
-            const result = await UploadUtils.pickDocument();
-            if (result === undefined) {
-                return;
-            }
-
-            await UploadUtils.uploadDocument(result.assets[0]);
-        } catch (err) {
-            console.error(`File upload error: ${err}`);
-            return;
-        }
-    }, []);
+    const startFileUpload = useCallback(async () => await UploadUtils.startFileUpload(), []);
 
     return (
         <View>
