@@ -4011,6 +4011,11 @@ js-base64@^3.7.5:
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.7.5.tgz#21e24cf6b886f76d6f5f165bfcd69cc55b9e3fca"
   integrity sha512-3MEt5DTINKqfScXKfJFrRbxkrnk2AxPWGBL/ycjz4dK8iqiSJ06UxD8jh8xuh6p10TX4t2+7FsBYVxxQbMg+qA==
 
+js-sha256@^0.10.1:
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/js-sha256/-/js-sha256-0.10.1.tgz#b40104ba1368e823fdd5f41b66b104b15a0da60d"
+  integrity sha512-5obBtsz9301ULlsgggLg542s/jqtddfOpV5KJc4hajc9JV8GeY2gZHSVpYBn4nWqAUTJ9v+xwtbJ1mIBgIH5Vw==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz"
@@ -5324,11 +5329,6 @@ react-native-document-picker@^9.1.0:
   integrity sha512-SRKPIAzUtcPDUstLRhQeebVVM+x+1I24iSvoy5mFp1KAD+6+UyDEle0SoD96k7MxVH5o46wPifWCYOA3FuQOyw==
   dependencies:
     invariant "^2.2.4"
-
-react-native-expo-sha256@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/react-native-expo-sha256/-/react-native-expo-sha256-1.0.0.tgz#f778342a3cea6bfa12afaabfb9c915f4cc1fc7c0"
-  integrity sha512-+AhwtpzAMGrdXBo+1ANFpXF89Jv20KIAOsQGBzd7IrJpSz88GQs6L6wJ0aQq7WWU6+lhFkyTEXd0TdWqojwlig==
 
 react-native@0.72.6:
   version "0.72.6"

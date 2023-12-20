@@ -1,104 +1,97 @@
 import React, { useCallback } from "react";
 import { View, Button } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-// import sha256 from "./sha256";
-import * as FileSystem from "expo-file-system";
-import { Base64 } from "js-base64";
-import { sha256 } from "react-native-expo-sha256";
+import { sha256 } from "js-sha256";
 
 const Upload = () => {
     // const UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
-    const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test"
+    const UPLOAD_ENDPOINT = "https://starfilesupload.requestcatcher.com/test";
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB
 
-    const uploadChunks = useCallback(async (chunks) => {
-        const promises = chunks.map((chunk, index) => {
-            return new Promise((resolve) => {
-                const uploadTask = FileSystem.createUploadTask(UPLOAD_ENDPOINT, chunk.uri, {
-                    httpMethod: "POST",
-                    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-                    headers: {
-                        "Content-Type": "application/octet-stream",
-                        "X-File-Name": `chunk-${index}`,
-                        "X-File-Hash": chunk.hash,
-                        "X-File-Index": String(index),
-                        "X-File-Total": String(chunks.length),
-                    },
-                });
+    const createLimiter = (concurrency) => {
+        let active = 0;
+        const queue = [];
 
-                const res = uploadTask.uploadAsync();
-                resolve(res);
+        return (task) => {
+            return new Promise((resolve, reject) => {
+                const runTask = () => {
+                    active++;
+                    task().then(resolve, reject).finally(() => {
+                        active--;
+                        if (queue.length > 0) {
+                            queue.shift()();
+                        }
+                    });
+                };
+
+                if (active < concurrency) {
+                    runTask();
+                } else {
+                    queue.push(runTask);
+                }
             });
-        });
+        };
+    }
 
-        try {
-            const responses = await Promise.all(promises);
-            // const data = await Promise.all(responses.map((response) => response.json()));
-            // console.log(data);
-        } catch (err) {
-            console.error(`Chunk upload error: ${err}`);
-        }
+    const createChunk = useCallback(async (reader) => {
+        const payload = new Uint8Array(reader.result);
+        const hash = sha256(payload);
+        console.log(`${hash} <- ${payload.length} bytes`);
 
-        // cleanup chunks that are saved to disk
-        await Promise.all(chunks.map((chunk) => FileSystem.deleteAsync(chunk.uri)));
+        return {
+            payload,
+            hash,
+        };
     }, []);
 
-    const getChunkFromBlobSlice = useCallback(async (blobSlice) => {
+    const uploadChunk = async (chunk) => {
+        const formData = new FormData();
+        formData.append("upload", chunk.payload);
+        formData.append("chunk_hash", chunk.hash);
+
+        return fetch(UPLOAD_ENDPOINT, {
+            method: "POST",
+            body: formData,
+        });
+    }
+
+    const doSomething123 = useCallback((blobSlice) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-
-            reader.onloadend = async () => {
-                if (reader.error) {
-                    reject(reader.error);
-                    return;
-                }
-
-                const payload = new Uint8Array(reader.result);
-                // const hash = sha256(payload);
-
-                const base64Payload = Base64.fromUint8Array(payload);
-                const uri = `${FileSystem.documentDirectory}-${hash}.chunk`;
-                await FileSystem.writeAsStringAsync(
-                    uri,
-                    base64Payload, {
-                    encoding: FileSystem.EncodingType.Base64
-                });
-
-                const hash = sha256(uri);
-                console.log(`${hash} -> ${uri}`);
-
-                resolve({
-                    uri: uri,
-                    hash: hash,
-                });
-            }
-
+            reader.onloadend = () => {
+                const chunk = createChunk(reader);
+                resolve(uploadChunk(chunk));
+            };
+            reader.onerror = () => reject(reader.error);
             reader.readAsArrayBuffer(blobSlice);
         });
     }, []);
 
-    const prepareAndUploadBlob = useCallback(async (blob) => {
-        const chunkSize = 2 * 1024 * 1024; // 2MB
-        const chunks = [];
+    const doSomething = useCallback((blob, offset) => {
+        const blobSlice = blob.slice(offset, offset + CHUNK_SIZE);
+        return doSomething123(blobSlice);
+    }, []);
 
-        let offset = 0;
-        while (offset < blob.size) {
-            const blobSlice = blob.slice(offset, offset + chunkSize);
-            const chunk = await getChunkFromBlobSlice(blobSlice);
-            chunks.push(chunk);
+    const uploadChunks = useCallback(async (blob) => {
+        const limit = createLimiter(5);
+        const tasks = [];
 
-            offset += chunkSize;
+        for (let offset = 0; offset < blob.size; offset += CHUNK_SIZE) {
+            tasks.push(limit(() => doSomething(blob, offset)));
         }
 
-        console.log(`Uploading ${chunks.length} chunks!`);
-
-        await uploadChunks(chunks);
+        try {
+            await Promise.all(tasks);
+        } catch (err) {
+            console.error(`Upload error: ${err}`);
+        }
     }, []);
 
     const uploadAsset = useCallback(async (asset) => {
         try {
             const file = await fetch(asset.uri);
             const blob = await file.blob();
-            await prepareAndUploadBlob(blob);
+            await uploadChunks(blob);
         } catch (err) {
             console.error(`Upload error: ${err}`);
         }
