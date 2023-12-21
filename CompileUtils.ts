@@ -14,7 +14,9 @@ export default class CompileUtils {
             });
             // UGLY HACK BELOW:
             let data = await response.text();
-            if (data.includes('}{')) data = '{' + data.split('}{')[1];
+            if (data.includes('}{')) {
+                data = `{${data.split('}{')[1]}`;
+            }
             return JSON.parse(data);
         } catch (err) {
             throw new Error(`Error while compiling a file: ${err}`);

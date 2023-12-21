@@ -30,7 +30,7 @@ export default class ChunkUtils {
     }
 
     private static getHashingProgress(offset: number, blobSize: number): number {
-        return Math.round(100 * ((offset + this.CHUNK_SIZE) / blobSize));
+        return Math.max(0, Math.min(100, Math.round(100 * (offset + this.CHUNK_SIZE) / blobSize)));
     }
 
     private static async createChunk(readerResult: ArrayBuffer) {
