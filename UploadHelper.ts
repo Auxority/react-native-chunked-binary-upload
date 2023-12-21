@@ -67,19 +67,19 @@ const uploadChunk = async (chunk: Chunk, chunkIndex: number): Promise<void> => {
 };
 
 const prepareChunkUploads = (chunks: Chunk[]): (() => Promise<void>)[] => {
+    console.log(1);
     let chunksUploaded = 0;
-    return chunks.map((chunk: Chunk, chunkIndex: number) => async () => {
-        const response = await uploadChunk(chunk, chunkIndex);
-        chunksUploaded = updateProgress(chunksUploaded, chunks.length);
-        return response;
+    return chunks.map((chunk: Chunk, chunkIndex: number) => {
+        return async () => {
+            console.log(2);
+            const result = await uploadChunk(chunk, chunkIndex);
+            chunksUploaded = updateProgress(chunksUploaded, chunks.length);
+            return result;
+        };
     });
 };
 
 export const uploadChunks = async (chunks: Chunk[]): Promise<void> => {
-    const promises = prepareChunkUploads(chunks);
-    try {
-        await limitConcurrency(promises, MAX_CONCURRENT_UPLOADS);
-    } catch (error) {
-        throw new Error(`uploadChunks: ${error}`);
-    }
+    const uploadPromises = prepareChunkUploads(chunks);
+    await limitConcurrency<void>(uploadPromises, MAX_CONCURRENT_UPLOADS);
 };

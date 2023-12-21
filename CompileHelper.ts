@@ -72,6 +72,7 @@ const compileFileFromChunks = async (
 const compileAndCheckFile = async (chunks: Chunk[], fileName: string, makePublic: boolean): Promise<string> => {
     const response = await compileFileFromChunks(chunks, fileName, makePublic);
     if (!response.file) {
+        console.log(response);
         throw new Error(COMPILE_FAILED_ERROR);
     }
 
@@ -86,10 +87,12 @@ export const compileFromAsset = async (
     makePublic: boolean = false,
 ): Promise<string> => {
     const chunks = await createChunksFromUri(asset.uri);
-    try {
-        return await compileAndCheckFile(chunks, asset.name, makePublic);
-    } catch (error) {
-        await uploadChunks(chunks);
-        return await compileAndCheckFile(chunks, asset.name, makePublic);
-    }
+    await uploadChunks(chunks);
+    return await compileAndCheckFile(chunks, asset.name, makePublic);
+    // try {
+    //     return await compileAndCheckFile(chunks, asset.name, makePublic);
+    // } catch (error) {
+    //     await uploadChunks(chunks);
+    //     return await compileAndCheckFile(chunks, asset.name, makePublic);
+    // }
 };

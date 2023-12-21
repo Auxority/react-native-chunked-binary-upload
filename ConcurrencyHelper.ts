@@ -1,26 +1,18 @@
-export const limitConcurrency = async (promises: (() => Promise<any>)[], maxConcurrency: number): Promise<any[]> => {
-    let activeTasks = 0;
-    let finishedTasks = 0;
-    const results: any[] = [];
-    const processQueue = (): any[] => {
-        if (promises.length === 0 && activeTasks === 0) {
-            return results;
+export const limitConcurrency = async <T>(tasks: (() => Promise<T>)[], maxConcurrency: number): Promise<T[]> => {
+    const results: Promise<T>[] = [];
+    const executing: Promise<void>[] = [];
+    for (const task of tasks) {
+        const p = Promise.resolve().then(() => task());
+        results.push(p);
+        if (maxConcurrency <= tasks.length) {
+            const e: any = p.then(() =>
+                executing.splice(executing.indexOf(e), 1)
+            );
+            executing.push(e);
+            if (executing.length >= maxConcurrency) {
+                await Promise.race(executing);
+            }
         }
-        while (activeTasks < maxConcurrency && promises.length > 0) {
-            activeTasks++;
-            const taskIndex = finishedTasks + activeTasks - 1;
-            const task = promises.shift()!;
-            task()
-                .then(result => {
-                    activeTasks--;
-                    finishedTasks++;
-                    results[taskIndex] = result;
-                    processQueue();
-                })
-                .catch(console.error);
-        }
-        return [];
-    };
-    processQueue();
-    return results;
+    }
+    return Promise.all(results);
 };
