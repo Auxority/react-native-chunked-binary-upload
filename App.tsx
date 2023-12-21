@@ -1,6 +1,6 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import Upload from "./Upload";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Upload from './Upload';
 
 const App = () => (
   <View style={styles.container}>

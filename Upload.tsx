@@ -1,41 +1,56 @@
-import { Buffer } from "buffer";
-import { View, Button } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
-import CryptoJS from "crypto-js";
-import React, { useCallback } from "react";
+import { Buffer } from 'buffer';
+import { View, Button } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import React, { useCallback } from 'react';
 
-import ChunkUtils, { Chunk } from "./ChunkUtils";
+import ChunkUtils, { Chunk } from './ChunkUtils';
+import CompileUtils from './CompileUtils';
 
 class UploadUtils {
-    private static readonly UPLOAD_ENDPOINT = "https://upload.starfiles.co/chunk";
+    private static readonly UPLOAD_ENDPOINT = 'https://upload.starfiles.co/chunk';
+    private static readonly UPLOAD_OPTIONS: FileSystem.FileSystemUploadOptions = {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'upload',
+    };
+    private static readonly DOCUMENT_PICKER_OPTIONS: DocumentPicker.DocumentPickerOptions = {
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+    };
+    private static readonly DOCUMENT_WRITE_OPTIONS: FileSystem.WritingOptions = {
+        encoding: FileSystem.EncodingType.Base64,
+    };
+    private static readonly CHUNK_FILE_EXTENSION = '.stuc';
 
-    public static async startFileUpload() {
-        const document = await UploadUtils.pickDocument();
-        await UploadUtils.uploadDocument(document);
+    public static async startFileUpload(fileName: string, makePublic: boolean = false) {
+        const document = await this.pickDocument();
+        await this.uploadDocument(document, fileName, makePublic);
     }
 
-    private static async uploadDocument(asset: DocumentPicker.DocumentPickerAsset) {
+    private static async uploadDocument(asset: DocumentPicker.DocumentPickerAsset, fileName: string, makePublic: boolean) {
         try {
-            const blob = await UploadUtils.getBlobFromAsset(asset);
+            const blob = await this.getBlobFromAsset(asset);
             const chunks = await ChunkUtils.createChunks(blob);
             const hashes = chunks.map((chunk) => chunk.hash);
-            const fileId = CryptoJS.SHA256(hashes.join("")).toString();
-            await UploadUtils.uploadChunks(chunks, fileId);
+            const fileId = Math.random().toString(36).substring(2, 18);
+            const response = await CompileUtils.compileFile(hashes, fileId, fileName, makePublic);
+            if (response.status === true) {
+                return response.file;
+            }
+
+            await this.uploadChunks(chunks);
         } catch (err) {
             throw new Error(`Upload error: ${err}`);
         }
     }
 
     private static async pickDocument(): Promise<DocumentPicker.DocumentPickerAsset> {
-        const result = await DocumentPicker.getDocumentAsync({
-            type: "*/*",
-            copyToCacheDirectory: true,
-            multiple: false,
-        });
+        const result = await DocumentPicker.getDocumentAsync(this.DOCUMENT_PICKER_OPTIONS);
 
         if (result === undefined || result.canceled === true || result.assets.length === 0) {
-            throw new Error("No file selected");
+            throw new Error('No file selected');
         }
 
         return result.assets[0];
@@ -48,54 +63,53 @@ class UploadUtils {
 
     private static arrayToBase64(array: Uint8Array) {
         const buffer = Buffer.from(array);
-        return buffer.toString("base64");
+        return buffer.toString(FileSystem.EncodingType.Base64);
     }
 
-    private static async executeUpload(url: string, fileUri: string) {
-        return await FileSystem.uploadAsync(
-            url,
-            fileUri,
-            {
-                httpMethod: "POST",
-                uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-                fieldName: "upload",
-            },
-        );
+    private static getFileUri(chunk: Chunk) {
+        return `${FileSystem.cacheDirectory}/${chunk.hash}.${this.CHUNK_FILE_EXTENSION}`;
     }
 
-    private static async uploadChunk(chunk: Chunk, fileId: string, index: number) {
-        const fileUri = `${FileSystem.cacheDirectory}/${fileId}-chunk-${index}`;
-        const urlParameters = new URLSearchParams({
-            test: "true",
+    private static getUrlParameters(chunk: Chunk, chunkIndex: number) {
+        return new URLSearchParams({
+            // test: 'true',
             chunk_hash: chunk.hash,
-            chunk_index: String(index),
-            file_id: fileId,
+            chunk_index: String(chunkIndex),
         });
-        const url = `${UploadUtils.UPLOAD_ENDPOINT}?${urlParameters.toString()}`;
+    }
+
+    private static getUploadUrl(chunk: Chunk, chunkIndex: number) {
+        const urlParameters = this.getUrlParameters(chunk, chunkIndex);
+        return `${this.UPLOAD_ENDPOINT}?${urlParameters.toString()}`;
+    }
+
+    private static async uploadChunk(chunk: Chunk, chunkIndex: number): Promise<FileSystem.FileSystemUploadResult> {
+        const fileUri = this.getFileUri(chunk);
+        const url = this.getUploadUrl(chunk, chunkIndex);
 
         try {
-            await FileSystem.writeAsStringAsync(
-                fileUri,
-                UploadUtils.arrayToBase64(chunk.payload),
-                { encoding: FileSystem.EncodingType.Base64 }
-            );
-            const response = await UploadUtils.executeUpload(url, fileUri);
+            const base64 = this.arrayToBase64(chunk.payload)
+            await FileSystem.writeAsStringAsync(fileUri, base64, this.DOCUMENT_WRITE_OPTIONS);
+            const response = await FileSystem.uploadAsync(url, fileUri, this.UPLOAD_OPTIONS);
             console.log(`Response body: ${response.body}`);
+            await FileSystem.deleteAsync(fileUri);
+            return response;
         } catch (err) {
+            await FileSystem.deleteAsync(fileUri);
             throw new Error(`Error while uploading a chunk: ${err}`);
         }
-
-        await FileSystem.deleteAsync(fileUri);
     }
 
-    private static async uploadChunks(chunks: Chunk[], fileId: string) {
+    private static async uploadChunks(chunks: Chunk[]): Promise<FileSystem.FileSystemUploadResult[]> {
         let chunksUploaded = 0;
-        const promises = chunks.map(async (chunk, index) => {
-            await UploadUtils.uploadChunk(chunk, fileId, index);
+        const promises = chunks.map(async (chunk, chunkIndex) => {
+            console.log(`Mapping chunk ${chunkIndex}`);
+            const res = await this.uploadChunk(chunk, chunkIndex);
             chunksUploaded++;
-            // TODO: Show progress to the user?
-            console.log(`Upload progress: ${(chunksUploaded / chunks.length * 100).toFixed(1)}% (${chunksUploaded}/${chunks.length})`);
+            console.log(`Upload progress: ${Math.round(chunksUploaded / chunks.length * 100)}% (${chunksUploaded}/${chunks.length})`);
+            return res;
         });
+
         try {
             return await Promise.all(promises);
         } catch (err) {
@@ -107,7 +121,9 @@ class UploadUtils {
 const Upload = () => {
     const startFileUpload = useCallback(async () => {
         try {
-            await UploadUtils.startFileUpload()
+            let fileName = 'test'; // TODO: Get the file name from user input
+            let makePublic = true; // TODO: Get the makePublic value from user input
+            await UploadUtils.startFileUpload(fileName, makePublic);
         } catch (err) {
             // TODO: Show an error message to the user?
             console.error(`An error occurred while uploading a file: ${err}`);
@@ -116,7 +132,7 @@ const Upload = () => {
 
     return (
         <View>
-            <Button title="Upload File" onPress={startFileUpload} />
+            <Button title='Upload File' onPress={startFileUpload} />
         </View>
     );
 };
