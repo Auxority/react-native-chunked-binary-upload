@@ -37,17 +37,15 @@ const uploadChunk = async (chunk: Chunk): Promise<void> => {
     await deleteChunkFile(chunk);
 };
 
-const prepareChunkUpload = (chunk: Chunk, chunksUploaded: number, totalChunks: number): () => Promise<void> => {
-    return async () => {
-        await uploadChunk(chunk);
-        chunksUploaded = updateProgress(chunksUploaded, totalChunks);
-    };
-};
-
 const prepareChunkUploads = (chunks: Chunk[]): (() => Promise<void>)[] => {
     let chunksUploaded = 0;
     const totalChunks = chunks.length;
-    return chunks.map((chunk: Chunk) => prepareChunkUpload(chunk, chunksUploaded, totalChunks));
+    return chunks.map((chunk: Chunk) => {
+        return async () => {
+            await uploadChunk(chunk);
+            chunksUploaded = updateProgress(chunksUploaded, totalChunks);
+        };
+    });
 };
 
 export const uploadChunks = async (chunks: Chunk[]): Promise<void> => {

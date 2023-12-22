@@ -1,16 +1,10 @@
-import { Chunk } from '../chunk/ChunkTypes';
-import { UPLOAD_ENDPOINT, UPLOAD_HTTP_METHOD } from '../upload/UploadConstants';
-import { createChunksFromUri } from '../chunk/ChunkHelper';
-import { uploadChunks } from '../upload/UploadHelper';
 import { DocumentPickerAsset } from 'expo-document-picker';
-
-export type CompileResponse = {
-    status: boolean;
-    missing_chunks: string[];
-    file?: string;
-};
-
-const COMPILE_FAILED_ERROR = new Error('Failed to compile file');
+import { Chunk } from '../chunk/ChunkTypes';
+import { COMPILE_FAILED_ERROR } from './CompileConstants';
+import { CompileResponse } from './CompileTypes';
+import { createChunksFromUri } from '../chunk/ChunkHelper';
+import { UPLOAD_ENDPOINT, UPLOAD_HTTP_METHOD } from '../upload/UploadConstants';
+import { uploadChunks } from '../upload/UploadHelper';
 
 const createCompileForm = (chunkHashes: string[], fileName: string, makePublic: boolean) => {
     const fileId = Math.random().toString(36).substring(2, 18);
@@ -43,14 +37,17 @@ const parseCompileResponse = async (response: Response) => {
 const fetchCompileResponse = async (compileData: FormData, urlParameters: string) => {
     const response = await fetch(`${UPLOAD_ENDPOINT}?${urlParameters}`, {
         method: UPLOAD_HTTP_METHOD,
-        // headers: { 'Content-Type': 'multipart/form-data' }, // TODO: Check if this is required
         body: compileData,
     });
 
     return await parseCompileResponse(response);
 };
 
-const getFileFromHashes = async (chunkHashes: string[], fileName: string, makePublic: boolean): Promise<string> => {
+const getFileFromHashes = async (
+    chunkHashes: string[],
+    fileName: string,
+    makePublic: boolean,
+): Promise<string> => {
     const response = await compileFileFromHashes(chunkHashes, fileName, makePublic);
     if (!response.file) {
         throw COMPILE_FAILED_ERROR;
@@ -59,7 +56,11 @@ const getFileFromHashes = async (chunkHashes: string[], fileName: string, makePu
     return response.file;
 };
 
-const checkCompiledChunks = async (chunks: Chunk[], fileName: string, makePublic: boolean): Promise<CompileResponse> => {
+const checkCompiledChunks = async (
+    chunks: Chunk[],
+    fileName: string,
+    makePublic: boolean,
+): Promise<CompileResponse> => {
     const chunkHashes = chunks.map((chunk) => chunk.hash);
     return await compileFileFromHashes(chunkHashes, fileName, makePublic);
 };
@@ -68,7 +69,12 @@ const filterChunks = (chunkHashes: string[], chunks: Chunk[]): Chunk[] => {
     return chunks.filter((chunk) => chunkHashes.includes(chunk.hash))
 };
 
-const compileMissingChunks = async (missingChunkHashes: string[], chunks: Chunk[], fileName: string, makePublic: boolean): Promise<string> => {
+const compileMissingChunks = async (
+    missingChunkHashes: string[],
+    chunks: Chunk[],
+    fileName: string,
+    makePublic: boolean
+): Promise<string> => {
     const filteredChunks = filterChunks(missingChunkHashes, chunks);
     await uploadChunks(filteredChunks);
     return await getFileFromHashes(missingChunkHashes, fileName, makePublic);
@@ -100,6 +106,7 @@ export const compileFromAsset = async (
     const chunks = await createChunksFromUri(asset.uri);
     const response = await checkCompiledChunks(chunks, asset.name, makePublic);
     if (response.file) {
+        console.log('File already compiled!');
         return response.file;
     }
 
