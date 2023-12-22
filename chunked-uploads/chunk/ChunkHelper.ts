@@ -1,12 +1,6 @@
 import CryptoJS from 'crypto-js';
-
-const EXPECTED_ARRAY_BUFFER_ERROR = 'Expected reader result to be an ArrayBuffer';
-const MAX_CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
-
-export type Chunk = {
-    hash: string;
-    payload: Uint8Array;
-};
+import { EXPECTED_ARRAY_BUFFER_ERROR, MAX_CHUNK_SIZE } from './ChunkConstants';
+import { Chunk } from './ChunkTypes';
 
 const getHashingProgress = (offset: number, blobSize: number): number => {
     return Math.max(0, Math.min(100, Math.round(100 * (offset + MAX_CHUNK_SIZE) / blobSize)));
@@ -14,6 +8,7 @@ const getHashingProgress = (offset: number, blobSize: number): number => {
 
 const showHashingProgress = (offset: number, blobSize: number): void => {
     console.log(`Hashing: ${getHashingProgress(offset, blobSize)}%`);
+    // TODO: Show the progress to the user
 };
 
 const fetchBlobFromUri = async (uri: string): Promise<Blob> => {
@@ -37,7 +32,7 @@ const getHashFromArrayBuffer = (resultBuffer: ArrayBuffer): string => {
 
 const createChunkFromReaderResult = (readerResult: FileReader['result']): Chunk => {
     if (!readerResult || typeof readerResult === 'string') {
-        throw new Error(EXPECTED_ARRAY_BUFFER_ERROR);
+        throw EXPECTED_ARRAY_BUFFER_ERROR;
     }
 
     return {
