@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet } from 'react-native';
+import React, { View, Text, StyleSheet } from 'react-native';
 import Upload from './Upload';
 
-const App = () => (
+const App = (): JSX.Element => (
   <View style={styles.container}>
     <Text>Upload files</Text>
     <Upload />
@@ -14,8 +14,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginTop: 100,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center'
+  }
 });
 
 export default App;
