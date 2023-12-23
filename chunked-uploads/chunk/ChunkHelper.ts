@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
-import { EXPECTED_ARRAY_BUFFER_ERROR, MAX_CHUNK_SIZE } from './ChunkConstants';
+import { EXPECTED_ARRAY_BUFFER_ERROR, MAX_CHUNK_SIZE, MAX_CONCURRENT_CHUNKS as MAX_SIMULTANEOUS_CHUNKS_PROCESSED } from './ChunkConstants';
 import { type Chunk } from './ChunkTypes';
+import { limitConcurrency } from '../concurrency/ConcurrencyHelper';
 
 const getHashingProgress = (offset: number, blobSize: number): number => {
   return Math.max(0, Math.min(100, Math.round(100 * (offset + MAX_CHUNK_SIZE) / blobSize)));
@@ -61,13 +62,15 @@ const createChunkFromBlob = async (
 };
 
 const createChunksFromBlob = async (blob: Blob): Promise<Chunk[]> => {
-  const chunks: Chunk[] = [];
-
-  for (let offset = 0; offset < blob.size; offset += MAX_CHUNK_SIZE) {
-    const chunk = await createChunkFromBlob(blob, offset);
-    chunks.push(chunk);
-    showHashingProgress(offset, blob.size);
-  }
+  const offsets = Array.from({ length: Math.ceil(blob.size / MAX_CHUNK_SIZE) }, (_, i) => i * MAX_CHUNK_SIZE);
+  const promises = offsets.map((offset) => {
+    return async (): Promise<Chunk> => {
+      const chunk = await createChunkFromBlob(blob, offset);
+      showHashingProgress(offset, blob.size);
+      return chunk;
+    };
+  });
+  const chunks: Chunk[] = await limitConcurrency<Chunk>(promises, MAX_SIMULTANEOUS_CHUNKS_PROCESSED);
 
   return chunks;
 };
