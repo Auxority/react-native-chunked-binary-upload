@@ -7,9 +7,16 @@ const getHashingProgress = (offset: number, blobSize: number): number => {
   return Math.max(0, Math.min(100, Math.round(100 * (offset + MAX_CHUNK_SIZE) / blobSize)));
 };
 
-const showHashingProgress = (offset: number, blobSize: number): void => {
-  console.log(`Hashing: ${getHashingProgress(offset, blobSize)}%`);
-  // TODO: Show the progress to the user
+const showHashingProgress = (
+  offset: number,
+  blobSize: number,
+  onHashingProgress?: (progress: number) => void
+): void => {
+  const progress = getHashingProgress(offset, blobSize);
+  if (onHashingProgress !== undefined) {
+    onHashingProgress(progress);
+  }
+  console.log(`Hashing: ${progress}%`);
 };
 
 const fetchBlobFromUri = async (uri: string): Promise<Blob> => {
@@ -61,12 +68,15 @@ const createChunkFromBlob = async (
   return await createChunkFromBlobSlice(blobSlice);
 };
 
-const createChunksFromBlob = async (blob: Blob): Promise<Chunk[]> => {
+const createChunksFromBlob = async (
+  blob: Blob,
+  onHashingProgress?: (progress: number) => void
+): Promise<Chunk[]> => {
   const offsets = Array.from({ length: Math.ceil(blob.size / MAX_CHUNK_SIZE) }, (_, i) => i * MAX_CHUNK_SIZE);
   const promises = offsets.map((offset) => {
     return async (): Promise<Chunk> => {
       const chunk = await createChunkFromBlob(blob, offset);
-      showHashingProgress(offset, blob.size);
+      showHashingProgress(offset, blob.size, onHashingProgress);
       return chunk;
     };
   });
@@ -75,7 +85,10 @@ const createChunksFromBlob = async (blob: Blob): Promise<Chunk[]> => {
   return chunks;
 };
 
-export const createChunksFromUri = async (uri: string): Promise<Chunk[]> => {
+export const createChunksFromUri = async (
+  uri: string,
+  onHashingProgress?: (progress: number) => void
+): Promise<Chunk[]> => {
   const blob = await fetchBlobFromUri(uri);
-  return await createChunksFromBlob(blob);
+  return await createChunksFromBlob(blob, onHashingProgress);
 };

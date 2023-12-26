@@ -75,10 +75,11 @@ const compileMissingChunks = async (
   missingChunkHashes: string[],
   chunks: Chunk[],
   fileName: string,
-  makePublic: boolean
+  makePublic: boolean,
+  onUploadProgress?: (progress: number) => void
 ): Promise<string> => {
   const filteredChunks = filterChunks(missingChunkHashes, chunks);
-  await uploadChunks(filteredChunks);
+  await uploadChunks(filteredChunks, onUploadProgress);
   return await getFileFromHashes(missingChunkHashes, fileName, makePublic);
 };
 
@@ -103,14 +104,18 @@ export const compileFileFromChunks = async (
 
 export const compileFromAsset = async (
   asset: DocumentPickerAsset,
-  makePublic: boolean = false
+  makePublic: boolean = false,
+  onHashingProgress?: (progress: number) => void,
+  onUploadProgress?: (progress: number) => void
 ): Promise<string> => {
-  const chunks = await createChunksFromUri(asset.uri);
+  const chunks = await createChunksFromUri(asset.uri, onHashingProgress);
   const response = await checkCompiledChunks(chunks, asset.name, makePublic);
   if (response.file !== undefined) {
-    console.log('File already compiled!');
+    if (onUploadProgress !== undefined) {
+      onUploadProgress(100);
+    }
     return response.file;
   }
 
-  return await compileMissingChunks(response.missing_chunks, chunks, asset.name, makePublic);
+  return await compileMissingChunks(response.missing_chunks, chunks, asset.name, makePublic, onUploadProgress);
 };

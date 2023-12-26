@@ -8,14 +8,20 @@ const getUploadProgress = (chunksUploaded: number, totalChunks: number): number 
   return Math.round(100 * chunksUploaded / totalChunks);
 };
 
-const showProgress = (chunksUploaded: number, totalChunks: number): void => {
+const showProgress = (chunksUploaded: number, totalChunks: number, onUploadProgress?: (progress: number) => void): void => {
   const progress = getUploadProgress(chunksUploaded, totalChunks);
+  if (onUploadProgress !== undefined) {
+    onUploadProgress(progress);
+  }
   console.log(`Uploading: ${progress}%`);
-  // callback(`${t('uploading')} (${progress}%)`);
 };
 
-const updateProgress = (chunksUploaded: number, totalChunks: number): number => {
-  showProgress(chunksUploaded + 1, totalChunks);
+const updateProgress = (
+  chunksUploaded: number,
+  totalChunks: number,
+  onUploadProgress?: (progress: number) => void
+): number => {
+  showProgress(chunksUploaded + 1, totalChunks, onUploadProgress);
   return chunksUploaded + 1;
 };
 
@@ -37,18 +43,24 @@ const uploadChunk = async (chunk: Chunk): Promise<void> => {
   await deleteChunkFile(chunk);
 };
 
-const prepareChunkUploads = (chunks: Chunk[]): Array<() => Promise<void>> => {
+const prepareChunkUploads = (
+  chunks: Chunk[],
+  onUploadProgress?: (progress: number) => void
+): Array<() => Promise<void>> => {
   let chunksUploaded = 0;
   const totalChunks = chunks.length;
   return chunks.map((chunk: Chunk) => {
     return async () => {
       await uploadChunk(chunk);
-      chunksUploaded = updateProgress(chunksUploaded, totalChunks);
+      chunksUploaded = updateProgress(chunksUploaded, totalChunks, onUploadProgress);
     };
   });
 };
 
-export const uploadChunks = async (chunks: Chunk[]): Promise<void> => {
-  const uploadPromises = prepareChunkUploads(chunks);
+export const uploadChunks = async (
+  chunks: Chunk[],
+  onUploadProgress?: (progress: number) => void
+): Promise<void> => {
+  const uploadPromises = prepareChunkUploads(chunks, onUploadProgress);
   await limitConcurrency(uploadPromises, MAX_CONCURRENT_UPLOADS);
 };
