@@ -117,5 +117,11 @@ export const compileFromAsset = async (
     return response.file;
   }
 
-  return await compileMissingChunks(response.missing_chunks, chunks, asset.name, makePublic, onUploadProgress);
+  return await compileMissingChunks(
+    response.missing_chunks,
+    chunks,
+    asset.name,
+    makePublic,
+    onUploadProgress
+  );
 };
