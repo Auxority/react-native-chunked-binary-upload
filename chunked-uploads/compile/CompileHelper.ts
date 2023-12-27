@@ -74,7 +74,7 @@ const filterChunks = (chunkHashes: string[], chunks: Chunk[]): Chunk[] => {
 export const compileFileFromHashes = async (
   chunkHashes: string[],
   fileName: string,
-  makePublic: boolean = false,
+  makePublic: boolean = false
 ): Promise<CompileResponse> => {
   const compileData = createCompileForm(chunkHashes, fileName, makePublic);
   const urlParameters = createUrlParameters(fileName);
