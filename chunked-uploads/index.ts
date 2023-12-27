@@ -1,4 +1,4 @@
-import { compileFromAsset } from './compile/CompileHelper';
+import { uploadAndCompileFromAsset } from './compile/CompileHelper';
 import { selectFile } from './file/FileHelper';
 
 export const startFileUpload = async (
@@ -7,7 +7,7 @@ export const startFileUpload = async (
   onUploadProgress?: (progress: number) => void
 ): Promise<string> => {
   const asset = await selectFile();
-  return await compileFromAsset(
+  return await uploadAndCompileFromAsset(
     asset,
     makePublic,
     onHashingProgress,

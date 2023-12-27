@@ -71,22 +71,10 @@ const filterChunks = (chunkHashes: string[], chunks: Chunk[]): Chunk[] => {
   return chunks.filter((chunk) => chunkHashes.includes(chunk.hash));
 };
 
-const compileMissingChunks = async (
-  missingChunkHashes: string[],
-  chunks: Chunk[],
-  fileName: string,
-  makePublic: boolean,
-  onUploadProgress?: (progress: number) => void
-): Promise<string> => {
-  const filteredChunks = filterChunks(missingChunkHashes, chunks);
-  await uploadChunks(filteredChunks, onUploadProgress);
-  return await getFileFromHashes(missingChunkHashes, fileName, makePublic);
-};
-
 export const compileFileFromHashes = async (
   chunkHashes: string[],
   fileName: string,
-  makePublic: boolean = false
+  makePublic: boolean = false,
 ): Promise<CompileResponse> => {
   const compileData = createCompileForm(chunkHashes, fileName, makePublic);
   const urlParameters = createUrlParameters(fileName);
@@ -102,7 +90,19 @@ export const compileFileFromChunks = async (
   return await compileFileFromHashes(chunkHashes, fileName, makePublic);
 };
 
-export const compileFromAsset = async (
+export const uploadAndCompileMissingChunks = async (
+  missingChunkHashes: string[],
+  chunks: Chunk[],
+  fileName: string,
+  makePublic: boolean,
+  onUploadProgress?: (progress: number) => void
+): Promise<string> => {
+  const filteredChunks = filterChunks(missingChunkHashes, chunks);
+  await uploadChunks(filteredChunks, onUploadProgress);
+  return await getFileFromHashes(missingChunkHashes, fileName, makePublic);
+};
+
+export const uploadAndCompileFromAsset = async (
   asset: DocumentPickerAsset,
   makePublic: boolean = false,
   onHashingProgress?: (progress: number) => void,
@@ -117,7 +117,7 @@ export const compileFromAsset = async (
     return response.file;
   }
 
-  return await compileMissingChunks(
+  return await uploadAndCompileMissingChunks(
     response.missing_chunks,
     chunks,
     asset.name,
